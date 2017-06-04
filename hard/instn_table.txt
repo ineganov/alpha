@@ -1,0 +1,279 @@
+Memory Insnts
+
+LDA    Load Address
+LDAH   Load Address High
+LDBU   Load Zero-Extended Byte from Memory to Register
+LDL    Load Sign-Extended Longword
+LDL_L  Load Sign-Extended Longword Locked
+LDQ    Load Quadword
+LDQ_L  Load Quadword Locked
+LDQ_U  Load Quadword Unaligned
+LDWU   Load Zero-Extended Word from Memory to Register
+STB    Store Byte
+STL    Store Longword
+STL_C  Store Longword Conditional
+STQ    Store Quadword
+STQ_C  Store Quadword Conditional
+STQ_U  Store Quadword Unaligned
+STW    Store Word
+
+
+
+Control Transfer
+BEQ    Branch if Register Equal to Zero
+BGE    Branch if Register Greater Than or Equal to Zero
+BGT    Branch if Register Greater Than Zero
+BLBC   Branch if Register Low Bit Is Clear
+BLBS   Branch if Register Low Bit Is Set
+BLE    Branch if Register Less Than or Equal to Zero
+BLT    Branch if Register Less Than Zero
+BNE    Branch if Register Not Equal to Zero
+BR     Unconditional Branch
+BSR    Branch to Subroutine
+JMP    Jump
+JSR    Jump to Subroutine
+RET    Return from Subroutine
+JSR_COROUTINE Jump to Subroutine Return
+
+
+Integer Instns
+ADD     Add Quadword/Longword
+S4ADD   Scaled Add by 4
+S8ADD   Scaled Add by 8
+CMPEQ   Compare Signed Quadword Equal
+CMPLT   Compare Signed Quadword Less Than
+CMPLE   Compare Signed Quadword Less Than or Equal
+CTLZ    Count leading zero
+CTPOP   Count population
+CTTZ    Count trailing zero
+CMPULT  Compare Unsigned Quadword Less Than
+CMPULE  Compare Unsigned Quadword Less Than or Equal
+MUL     Multiply Quadword/Longword
+UMULH   Multiply Quadword Unsigned High
+SUB     Subtract Quadword/Longword
+S4SUB   Scaled Subtract by 4
+S8SUB   Scaled Subtract by 8
+
+
+
+
+Logical And Shift
+AND     Logical Product
+BIC     Logical Product with Complement
+BIS     Logical Sum (OR)
+EQV     Logical Equivalence (XORNOT)
+ORNOT   Logical Sum with Complement
+XOR     Logical Difference
+CMOVxx  Conditional Move Integer
+SLL     Shift Left Logical
+SRA     Shift Right Arithmetic
+SRL     Shift Right Logical
+
+
+
+
+Byte Manipulation
+CMPBGE  Compare Byte
+EXTBL   Extract Byte Low
+EXTWL   Extract Word Low
+EXTLL   Extract Longword Low
+EXTQL   Extract Quadword Low
+EXTWH   Extract Word High
+EXTLH   Extract Longword High
+EXTQH   Extract Quadword High
+INSBL   Insert Byte Low
+INSWL   Insert Word Low
+INSLL   Insert Longword Low
+INSQL   Insert Quadword Low
+INSWH   Insert Word High
+INSLH   Insert Longword High
+INSQH   Insert Quadword High
+MSKBL   Mask Byte Low
+MSKWL   Mask Word Low
+MSKLL   Mask Longword Low
+MSKQL   Mask Quadword Low
+MSKWH   Mask Word High
+MSKLH   Mask Longword High
+MSKQH   Mask Quadword High
+SEXTB   Sign Extend Byte
+SEXTW   Sign Extend Word
+ZAP     Zero Bytes
+ZAPNOT  Zero Bytes Not
+
+
+
+
+
+
+// Arithmetic
+
+ADDL        Opr      10.00          Add longword
+ADDL/V      Opr      10.40          
+ADDQ        Opr      10.20          Add quadword
+ADDQ/V      Opr      10.60          
+SUBL        Opr      10.09          Subtract longword
+SUBL/V      Opr      10.49          
+SUBQ        Opr      10.29          Subtract quadword
+SUBQ/V      Opr      10.69          
+S4ADDL      Opr      10.02          Scaled add longword by 4
+S4ADDQ      Opr      10.22          Scaled add quadword by 4
+S4SUBL      Opr      10.0B          Scaled subtract longword by 4
+S4SUBQ      Opr      10.2B          Scaled subtract quadword by 4
+S8ADDL      Opr      10.12          Scaled add longword by 8
+S8ADDQ      Opr      10.32          Scaled add quadword by 8
+S8SUBL      Opr      10.1B          Scaled subtract longword by 8
+S8SUBQ      Opr      10.3B          Scaled subtract quadword by 8
+CMPBGE      Opr      10.0F          Compare byte
+CMPEQ       Opr      10.2D          Compare signed quadword equal
+CMPLE       Opr      10.6D          Compare signed quadword less than or equal
+CMPLT       Opr      10.4D          Compare signed quadword less than
+CMPULE      Opr      10.3D          Compare unsigned quadword less than or equal
+CMPULT      Opr      10.1D          Compare unsigned quadword less than
+MULL        Opr      13.00          Multiply longword
+MULL/V      Opr      13.40          
+MULQ        Opr      13.20          Multiply quadword
+MULQ/V      Opr      13.60          
+UMULH       Opr      13.30          Unsigned multiply quadword high
+
+
+// Logical
+
+AND         Opr      11.00          Logical product
+EQV         Opr      11.48          Logical equivalence
+ORNOT       Opr      11.28          Logical sum with complement
+XOR         Opr      11.40          Logical difference
+BIC         Opr      11.08          Bit clear
+BIS         Opr      11.20          Logical sum
+CMOVEQ      Opr      11.24          CMOVE if = zero
+CMOVGE      Opr      11.46          CMOVE if >= zero
+CMOVGT      Opr      11.66          CMOVE if > zero
+CMOVLBC     Opr      11.16          CMOVE if low bit clear
+CMOVLBS     Opr      11.14          CMOVE if low bit set
+CMOVLE      Opr      11.64          CMOVE if <= zero
+CMOVLT      Opr      11.44          CMOVE if < zero
+CMOVNE      Opr      11.26          CMOVE if ! zero
+
+
+
+
+SLL         Opr      12.39          Shift left logical
+SRA         Opr      12.3C          Shift right arithmetic
+SRL         Opr      12.34          Shift right logical
+EXTBL       Opr      12.06          Extract byte low
+EXTLH       Opr      12.6A          Extract longword high
+EXTLL       Opr      12.26          Extract longword low
+EXTQH       Opr      12.7A          Extract quadword high
+EXTQL       Opr      12.36          Extract quadword low
+EXTWH       Opr      12.5A          Extract word high
+EXTWL       Opr      12.16          Extract word low
+INSBL       Opr      12.0B          Insert byte low
+INSLH       Opr      12.67          Insert longword high
+INSLL       Opr      12.2B          Insert longword low
+INSQH       Opr      12.77          Insert quadword high
+INSQL       Opr      12.3B          Insert quadword low
+INSWH       Opr      12.57          Insert word high
+INSWL       Opr      12.1B          Insert word low
+MSKBL       Opr      12.02          Mask byte low
+MSKLH       Opr      12.62          Mask longword high
+MSKLL       Opr      12.22          Mask longword low
+MSKQH       Opr      12.72          Mask quadword high
+MSKQL       Opr      12.32          Mask quadword low
+MSKWH       Opr      12.52          Mask word high
+MSKWL       Opr      12.12          Mask word low
+ZAP         Opr      12.30          Zero bytes
+ZAPNOT      Opr      12.31          Zero bytes not
+
+
+// Branches
+BEQ         Bra      39             Branch if = zero
+BGE         Bra      3E             Branch if >= zero
+BGT         Bra      3F             Branch if > zero
+BLBC        Bra      38             Branch if low bit clear
+BLBS        Bra      3C             Branch if low bit set
+BLE         Bra      3B             Branch if <= zero
+BLT         Bra      3A             Branch if < zero
+BNE         Bra      3D             Branch if ! zero
+BR          Bra      30             Unconditional branch
+BSR         Mbr      34             Branch to subroutine
+JMP         Mbr      1A.0           Jump
+JSR         Mbr      1A.1           Jump to subroutine
+RET         Mbr      1A.2           Return from subroutine
+JSR_CRE     Mbr      1A.3           Jump to subroutine return
+CALL_PAL    Pcd      00             Trap to PALcode
+
+
+// LSU
+LDA         Mem      08             Load address
+LDAH        Mem      09             Load address high
+
+LDL         Mem      28             Load sign-extended longword
+LDL_L       Mem      2A             Load sign-extended longword locked
+LDQ         Mem      29             Load quadword
+LDQ_L       Mem      2B             Load quadword locked
+LDQ_U       Mem      0B             Load unaligned quadword
+
+STL         Mem      2C             Store longword
+STL_C       Mem      2E             Store longword conditional
+STQ         Mem      2D             Store quadword
+STQ_C       Mem      2F             Store quadword conditional
+STQ_U       Mem      0F             Store unaligned quadword
+
+
+// Byte word extension (BWX)
+
+LDBU        Mem      0A             Load zero-extended byte
+LDWU        Mem      0C             Load zero-extended word
+STB         Mem      0E             Store byte
+STW         Mem      0D             Store word
+SEXTB       Opr      1C.00          Sign extend byte
+SEXTW       Opr      1C.01          Sign extend word
+
+
+// Count Extension (CIX)
+
+CTLZ        Opr      1C.32          Count leading zero
+CTPOP       Opr      1C.30          Count population
+CTTZ        Opr      1C.33          Count trailing zero
+
+
+
+// Multimedia extension (MAX)
+
+MAXSB8      Opr      1C.3E          Vector signed byte maximum
+MAXSW4      Opr      1C.3F          Vector signed word maximum
+MAXUB8      Opr      1C.3C          Vector unsigned byte maximum
+MAXUW4      Opr      1C.3D          Vector unsigned word maximum
+MINSB8      Opr      1C.38          Vector signed byte minimum
+MINSW4      Opr      1C.39          Vector signed word minimum
+MINUB8      Opr      1C.3A          Vector unsigned byte minimum
+MINUW4      Opr      1C.3B          Vector unsigned word minimum
+PKLB        Opr      1C.37          Pack longwords to bytes
+PKWB        Opr      1C.36          Pack words to bytes
+UNPKBL      Opr      1C.35          Unpack bytes to longwords
+UNPKBW      Opr      1C.34          Unpack bytes to words
+PERR        Opr      1C.31          Pixel error
+
+
+
+// Esoteric
+AMASK       Opr      11.61          Architecture mask
+IMPLVER     Opr      11.6C          Implementation version
+
+EXCB        Mfc      18.0400        Exception barrier
+TRAPB       Mfc      18.0000        Trap barrier
+
+ECB         Mfc      18.E800        Evict cache block
+FETCH       Mfc      18.8000        Prefetch data
+FETCH_M     Mfc      18.A000        Prefetch data, modify intent
+MB          Mfc      18.4000        Memory barrier
+RC          Mfc      18.E000        Read and clear
+RPCC        Mfc      18.C000        Read process cycle counter
+RS          Mfc      18.F000        Read and set
+WH64        Mfc      18.F800        Write hint - 64 bytes
+WMB         Mfc      18.4400        Write memory barrier
+
+
+
+
+
+

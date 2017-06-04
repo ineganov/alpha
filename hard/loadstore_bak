@@ -1,0 +1,134 @@
+`include "defines.vh"
+
+module loadstore (input         clk,
+                  input         reset,
+                  input         enable,
+
+                  input  [63:0] op_a,
+                  input  [63:0] op_base,
+                  input  [15:0] op_offset,
+
+                  input   [2:0] lsu_op,
+                  input   [1:0] op_size,
+                  input         op_llsc,
+
+                  // Result group
+                  output        lsu_busy,
+                  output        rvalid,
+                  output [63:0] result, 
+
+                  // BIU interface
+                  output                biu_req_rd,
+                  output                biu_req_wr,
+                  output     [`PA_BITS] biu_req_addr,
+                  output reg      [2:0] biu_req_size,
+                  output reg     [63:0] biu_writedata,
+                  input                 biu_beat,
+                  input                 biu_last,
+                  input                 biu_ack,
+                  input          [63:0] biu_readdata   );
+
+logic [63:0] full_offset_e0;
+logic [63:0] va_e0;
+
+logic  [7:0] be_base_e0, be_shifted_e0;
+logic        allow_ua_e0;
+
+logic [63:0] writedata_aligned_e0, bitmask_e0;
+logic [63:0] va_e1, readdata_aligned_e1, readdata_zext_e1, readdata_sext_e1;
+logic  [1:0] op_size_e1;
+logic        inst_rd_e1, inst_wr_e1, inst_lda_e1, sext_e1;
+
+logic        e_va_rsrvd_e1;
+
+// LDQ_U and STQ_U are unlaigned instead of unsigned!
+assign allow_ua_e0 = ((lsu_op == `LSU_LD_U) & (op_size == `OP_SZ_QWRD) & ~op_llsc) | 
+                     ((lsu_op == `LSU_ST_U) & (op_size == `OP_SZ_QWRD) & ~op_llsc) ;
+
+
+assign full_offset_e0 = (lsu_op == `LSU_LDAH) ? { {32{op_offset[15]}}, op_offset, 16'd0} :
+                                                { {48{op_offset[15]}}, op_offset } ;
+
+assign va_e0 = (op_base + full_offset_e0) & ~{61'd0, {3{allow_ua_e0}}};
+
+
+always_comb
+   case(op_size)
+      `OP_SZ_BYTE: bitmask_e0 = 64'h0000_000f;
+      `OP_SZ_WORD: bitmask_e0 = 64'h0000_00ff;
+      `OP_SZ_LWRD: bitmask_e0 = 64'h0000_ffff;
+      default:     bitmask_e0 = 64'hffff_ffff;
+   endcase
+
+
+assign writedata_aligned_e0 = (op_a & bitmask_e0) << {va_e0[2:0], 3'd0};
+
+
+always@(posedge clk)
+   if(reset)
+      inst_rd_e1 <= 1'b0;
+   else if(enable) // Assume lsu_op respects lsu_busy
+      inst_rd_e1 <= ((lsu_op == `LSU_LD) | (lsu_op == `LSU_LD_U));
+   else if(biu_ack)
+      inst_rd_e1 <= 1'b0;
+
+always@(posedge clk)
+   if(reset)
+      inst_wr_e1 <= 1'b0;
+   else if(enable) // Assume lsu_op respects lsu_busy
+      inst_wr_e1 <= ((lsu_op == `LSU_ST) | (lsu_op == `LSU_ST_U));
+   else if(biu_ack)
+      inst_wr_e1 <= 1'b0;
+
+always@(posedge clk)
+   if(reset)
+      inst_lda_e1 <= 1'b0;
+   else if(enable)
+      inst_lda_e1 <= ((lsu_op == `LSU_LDA) | (lsu_op == `LSU_LDAH));
+   else 
+      inst_lda_e1 <= 1'b0;
+
+
+always@(posedge clk)
+   if(reset)        biu_writedata <= 64'd0;
+   else if( (lsu_op == `LSU_ST  ) | 
+            (lsu_op == `LSU_ST_U) ) biu_writedata <= writedata_aligned_e0;
+
+always@(posedge clk)
+   if(reset)        
+   begin
+      op_size_e1   <= 2'd0;
+      va_e1        <= 64'd0;
+      sext_e1      <= 1'b0;
+      biu_req_size <= 8'h00;
+   end
+   else if(enable)
+   begin
+      op_size_e1   <= op_size;
+      va_e1        <= va_e0;
+      sext_e1      <= (lsu_op == `LSU_LD) & (op_size == `OP_SZ_LWRD);
+      biu_req_size <= {1'b0, op_size};
+   end
+
+
+
+
+assign readdata_aligned_e1 = biu_readdata >> {biu_req_addr[2:0], 3'd0};
+assign readdata_zext_e1 = (         {64{(op_size_e1 == `OP_SZ_QWRD)}}  |
+                            {32'd0, {32{(op_size_e1 == `OP_SZ_LWRD)}}} |
+                            {48'd0, {16{(op_size_e1 == `OP_SZ_WORD)}}} |
+                            {56'd0,  {8{(op_size_e1 == `OP_SZ_BYTE)}}} ) & readdata_aligned_e1;
+
+assign readdata_sext_e1 = {32{sext_e1 & readdata_aligned_e1[31]}} | readdata_zext_e1;
+                          
+assign rvalid = ((inst_wr_e1 | inst_rd_e1) & biu_ack) | inst_lda_e1;
+assign result = inst_lda_e1 ? va_e1 : readdata_sext_e1;
+assign lsu_busy = inst_wr_e1 | inst_rd_e1 | inst_lda_e1;
+
+assign biu_req_rd = inst_rd_e1;
+assign biu_req_wr = inst_wr_e1;
+assign biu_req_addr = va_e1[`PA_BITS];
+
+// assert( ~(enable & lsu_busy));
+
+endmodule

@@ -1,0 +1,298 @@
+`include "defines.vh"
+
+module issuegrad (   input               clk,
+                     input               reset, 
+
+                     // Decode interface
+                     input               instn_vld_id,
+                     input        [63:0] instn_pc_id,
+                     input [`FUNIT_BITS] instn_funit_id,
+                     input         [4:0] reg_dst_id,
+                     input               no_rf_upd_id,
+                     input               log_cond_upd_id,
+                     input        [31:0] instn_opcode_id,
+                     output              i_issue_id,
+
+                     // Functional unit outputs
+                     input               adds_rvalid_e1,
+                     input               adds_ovflow_e1,
+                     input        [63:0] adds_result_e1,
+
+                     input               log_rvalid_e1,
+                     input               cmp_result_e1,
+                     input        [63:0] log_result_e1,
+
+                     input               shm_rvalid_e1,
+                     input        [63:0] shm_result_e1,
+
+                     input               lsu_busy_ex,
+                     input               lsu_valid_e1,
+                     input               lsu_replay_ex,
+                     input        [63:0] lsu_result_e1,
+
+                     input               ctu_rvalid_e1,
+                     input        [63:0] ctu_result_e1,
+                     input               ctu_force_rdr_e1,
+                     input        [63:0] ctu_next_pc_e1,
+
+                     input               mpu_rvalid_e2,
+                     input               mpu_ovflow_e2,
+                     input        [63:0] mpu_result_e2,
+
+                     input               cpr_rvalid_e1,
+                     input      [63:0]   cpr_result_e1,
+
+                     // Fetch direction outputs
+                     output              redir_vld_xx,
+                     output       [63:0] redir_addr_xx,
+
+                     // Funit enables
+                     output logic [`FUNIT_BITS] funit_en_e0,
+
+                     // Exception inputs
+                     input               e_reserved_id,
+                     input               e_halt_id,
+                     input               e_callpal_id,
+                     input               hw_ret_id,
+
+                     // Graduation outputs
+                     output              rf_wen_gr,
+                     output        [4:0] rf_waddr_gr,
+                     output       [63:0] rf_wdata_gr,
+
+                     // Exceptions
+                     output                   e_enter_gr,
+                     output                   e_exit_gr,
+                     output            [63:0] n_epc_gr,
+                     output            [31:0] n_inst_gr,
+                     output [`CPR_CAUSE_BITS] n_cause_gr,
+
+                     // Counters
+                     output                   i_cmplt_gr ); // Instruction graduated
+
+logic [63:0] instn_pc_l;
+logic [31:0] instn_opcode_l;
+logic        post_reset, reset_r;
+logic        instn_pending_xx;
+logic        instn_cmplt_all_gr;
+logic        no_rf_upd_l, log_cond_upd_l;
+logic        e_reserved_l, e_halt_l, e_callpal_l, hw_ret_l;
+logic        cpu_halt_xx;
+logic  [4:0] reg_dst_l;
+logic [63:0] next_pc_xx;
+
+wire         exc_cmplt_l  = e_reserved_l | e_halt_l | e_callpal_l;
+wire         eret_cmplt_l = hw_ret_l;
+
+
+assign instn_cmplt_ok_gr  = adds_rvalid_e1 | log_rvalid_e1 | shm_rvalid_e1 | 
+                            lsu_valid_e1   | ctu_rvalid_e1 | mpu_rvalid_e2 |
+                            cpr_rvalid_e1  ;
+
+
+assign instn_cmplt_all_gr = adds_rvalid_e1 | log_rvalid_e1 | shm_rvalid_e1 | 
+                            lsu_valid_e1   | ctu_rvalid_e1 | mpu_rvalid_e2 |
+                            cpr_rvalid_e1  | exc_cmplt_l   | eret_cmplt_l;
+
+
+
+always_ff@(posedge clk)
+   if(reset)
+      instn_pending_xx <= 1'b0;
+   else if(i_issue_id)
+      instn_pending_xx <= 1'b1;
+   else if(instn_pending_xx & (instn_cmplt_all_gr | lsu_replay_ex))
+      instn_pending_xx <= 1'b0;
+
+assign i_issue_id = instn_vld_id 
+                    &  (~instn_pending_xx | instn_cmplt_all_gr)
+                    & ~(lsu_busy_ex & instn_funit_id[`LSU_EN])
+                    & ~cpu_halt_xx;
+
+always_ff@(posedge clk)
+   if(i_issue_id) 
+   begin
+      reg_dst_l      <= reg_dst_id;
+      no_rf_upd_l    <= no_rf_upd_id;
+      log_cond_upd_l <= log_cond_upd_id;
+      instn_pc_l     <= instn_pc_id;
+      instn_opcode_l <= instn_opcode_id;
+   end
+
+always_ff@(posedge clk)
+   if(reset | exc_cmplt_l | eret_cmplt_l)
+   begin
+      e_reserved_l   <= 1'b0;
+      e_halt_l       <= 1'b0;
+      e_callpal_l    <= 1'b0;
+      hw_ret_l       <= 1'b0;
+   end
+   else if(i_issue_id) 
+   begin
+      e_reserved_l   <= e_reserved_id;
+      e_halt_l       <= e_halt_id;
+      e_callpal_l    <= e_callpal_id;
+      hw_ret_l       <= hw_ret_id;
+   end
+
+always_ff@(posedge clk)
+   if         (reset) cpu_halt_xx <= 1'b0;
+   else if (e_halt_l) cpu_halt_xx <= 1'b1;
+
+
+// RF write
+assign rf_wen_gr   = instn_cmplt_ok_gr & ~no_rf_upd_l & (~log_cond_upd_l | cmp_result_e1) & (reg_dst_l != 5'd31);
+assign rf_waddr_gr = reg_dst_l;
+assign rf_wdata_gr = ({64{ adds_rvalid_e1  }} & adds_result_e1 ) |
+                     ({64{ log_rvalid_e1   }} &  log_result_e1 ) |
+                     ({64{ shm_rvalid_e1   }} &  shm_result_e1 ) |
+                     ({64{ lsu_valid_e1    }} &  lsu_result_e1 ) |
+                     ({64{ ctu_rvalid_e1   }} &  ctu_result_e1 ) |
+                     ({64{ mpu_rvalid_e2   }} &  mpu_result_e2 ) |
+                     ({64{ cpr_rvalid_e1   }} &  cpr_result_e1 ) ;
+
+// Funit dispatch
+always_ff@(posedge clk)
+   if(reset)
+      funit_en_e0 <= `FUNIT_NONE;
+   else if(i_issue_id)
+      funit_en_e0 <= instn_funit_id;
+   else
+      funit_en_e0 <= `FUNIT_NONE;
+
+
+// Fetch direction logic
+
+always@(posedge clk)
+   if(reset | post_reset)
+      reset_r <= reset;
+
+assign post_reset = reset_r & ~reset;
+
+
+
+assign redir_vld_xx  = (post_reset | lsu_replay_ex | (ctu_force_rdr_e1 & instn_cmplt_all_gr)) & ~(e_halt_l | cpu_halt_xx) ;
+assign redir_addr_xx = lsu_replay_ex ? instn_pc_l : next_pc_xx;
+
+always_comb
+   if(post_reset)
+      next_pc_xx = `CPU_RESET_ADDR;
+   else if(exc_cmplt_l)
+      next_pc_xx = `CPU_EXC_ADDR;
+   else
+      next_pc_xx = ctu_next_pc_e1;
+
+
+// FIXME: only works for fully interlocked processor
+assign n_epc_gr   = instn_pc_id;
+assign n_inst_gr  = instn_opcode_id;
+assign n_cause_gr = {e_halt_l, e_reserved_l, e_callpal_l};
+
+assign e_enter_gr = exc_cmplt_l;
+assign e_exit_gr  = eret_cmplt_l;
+
+assign i_cmplt_gr = instn_cmplt_ok_gr;
+
+`ifdef MODEL_TECH
+
+instn_decode nonsynth_idecode(   .instn         ( instn_opcode_l  ),
+                                 .funit         (                 ),
+                                 .reg_a         (                 ),
+                                 .reg_b         (                 ),
+                                 .reg_dst       (                 ),
+                                 .literal       (                 ),
+                                 .no_rf_upd     (                 ),
+                                 .use_ltrl_8    (                 ),
+                                 .use_ltrl_16   (                 ),
+                                 .use_ltrl_20   (                 ),
+                                 .addsub_op     (                 ),
+                                 .addsub_scale  (                 ),
+                                 .addsub_cmp_op (                 ),
+                                 .log_op        (                 ),
+                                 .log_cmp_op    (                 ),
+                                 .log_cond_upd  (                 ),
+                                 .ctu_op        (                 ),
+                                 .shmsk_op      (                 ),
+                                 .op_size       (                 ),
+                                 .mpu_op        (                 ),
+                                 .lsu_op        (                 ),
+                                 .op_llsc       (                 ),
+                                 .cpr_op        (                 ), 
+                                 .e_reserved    (                 ), 
+                                 .e_halt        (                 ), 
+                                 .e_callpal     (                 ), 
+                                 .hw_ret        (                 ) );
+
+
+//-----------simulation-only----------------
+function string get_rname(input [4:0] idx);
+begin
+   case(idx)
+   5'd00: get_rname = "$v0";
+   5'd01: get_rname = "$t0";
+   5'd02: get_rname = "$t1";
+   5'd03: get_rname = "$t2";
+   5'd04: get_rname = "$t3";
+   5'd05: get_rname = "$t4";
+   5'd06: get_rname = "$t5";
+   5'd07: get_rname = "$t6";
+   5'd08: get_rname = "$t7";
+   5'd09: get_rname = "$s0";
+   5'd10: get_rname = "$s1";
+   5'd11: get_rname = "$s2";
+   5'd12: get_rname = "$s3";
+   5'd13: get_rname = "$s4";
+   5'd14: get_rname = "$s5";
+   5'd15: get_rname = "$fp";
+   5'd16: get_rname = "$a0";
+   5'd17: get_rname = "$a1";
+   5'd18: get_rname = "$a2";
+   5'd19: get_rname = "$a3";
+   5'd20: get_rname = "$a4";
+   5'd21: get_rname = "$a5";
+   5'd22: get_rname = "$t8";
+   5'd23: get_rname = "$t9";
+   5'd24: get_rname = "$t10";
+   5'd25: get_rname = "$t11";
+   5'd26: get_rname = "$ra";
+   5'd27: get_rname = "$t12";
+   5'd28: get_rname = "$at";
+   5'd29: get_rname = "$gp";
+   5'd30: get_rname = "$sp";
+   5'd31: get_rname = "$zero";
+   endcase
+end
+endfunction
+
+always_ff@ (posedge clk)
+   begin
+      if     (exc_cmplt_l )
+         $display("[%8tps] %08x_%08x: <%8s> ----EXCEPTION----", $time,
+                                                                instn_pc_l[63:32], 
+                                                                instn_pc_l[31:0],
+                                                                nonsynth_idecode.decoded_instn.name());
+      else if(exc_cmplt_l )
+         $display("[%8tps] %08x_%08x: <%8s> ------ERET-------", $time,
+                                                                instn_pc_l[63:32], 
+                                                                instn_pc_l[31:0],
+                                                                nonsynth_idecode.decoded_instn.name());
+      else if(instn_cmplt_ok_gr & ~rf_wen_gr)
+         $display("[%8tps] %08x_%08x: <%8s> --------_--------", $time,
+                                                                instn_pc_l[63:32], 
+                                                                instn_pc_l[31:0],
+                                                                nonsynth_idecode.decoded_instn.name());
+      else if(instn_cmplt_ok_gr & rf_wen_gr)
+         $display("[%8tps] %08x_%08x: <%8s> %08x_%08x --> %s (r%02d)", $time,
+                                                                       instn_pc_l[63:32], 
+                                                                       instn_pc_l[31:0],
+                                                                       nonsynth_idecode.decoded_instn.name(),
+                                                                       rf_wdata_gr[63:32],
+                                                                       rf_wdata_gr[31:0],
+                                                                       get_rname(rf_waddr_gr),
+                                                                       rf_waddr_gr);
+
+   end
+
+`endif
+
+endmodule
