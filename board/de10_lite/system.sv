@@ -72,7 +72,7 @@ module system
     );
 
     alpha_periph_ahb_lite #(
-        .GPIO_WIDTH       ( CONF_GPIO_WIDTH )
+        .GPIO_WIDTH       ( CONF_GPIO_WIDTH ),
         .BRAM_WIDTH       ( CONF_BRAM_WIDTH )
     ) periph_ahb ( 
         .clk              ( clk             ),

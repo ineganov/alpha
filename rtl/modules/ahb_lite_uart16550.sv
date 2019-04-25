@@ -145,15 +145,15 @@ module ahb_lite_sp
     wire act = HTRANS != `HTRANS_IDLE && HSEL && HREADY;
 
     always_ff @(posedge HCLK or negedge HRESETn)
-        if(HRESETn) we <= 1'b0;
+        if(~HRESETn) we <= 1'b0;
         else        we <= act & HWRITE;
 
     reg [MADDR_WIDTH-1:0] wa;
     always_ff @(posedge HCLK)
         if(act) wa <= HADDR [BADDR_WIDTH +: MADDR_WIDTH];
 
-    wire                  re = act & ~we;
-    reg [MADDR_WIDTH-1:0] ra = HADDR [BADDR_WIDTH +: MADDR_WIDTH];
+    wire                   re = act & ~we;
+    wire [MADDR_WIDTH-1:0] ra = HADDR [BADDR_WIDTH +: MADDR_WIDTH];
 
     assign a  = we ? wa: ra;
     assign en = we | re;

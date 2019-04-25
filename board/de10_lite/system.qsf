@@ -450,16 +450,28 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/core/addsub.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/ahb_lite_1xN.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/ahb_lite_bram.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/ahb_lite_gpio.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/ahb_lite_resizer.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/ahb_lite_sdp.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/ahb_lite_uart16550.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/ahb_lite.vh
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/alpha_miu.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/alpha_periph_ahb_lite.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/miu_ahb_master.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/sdp_bram.sv
 set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/sdp_gpio.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/seg7_display.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/uart16550/raminfr.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/uart16550/uart_defines.vh
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/uart16550/uart_receiver.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/uart16550/uart_regs.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/uart16550/uart_rfifo.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/uart16550/uart_sync_flops.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/uart16550/uart_tfifo.v
+set_global_assignment -name SYSTEMVERILOG_FILE ../../../rtl/modules/uart16550/uart_transmitter.v
 
 set_global_assignment -name SEARCH_PATH ../../../rtl/core
 set_global_assignment -name SEARCH_PATH ../../../rtl/modules
+set_global_assignment -name SEARCH_PATH ../../../rtl/modules/uart16550
 
 set_global_assignment -name HEX_FILE ../../image/bram.hex64
 

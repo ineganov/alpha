@@ -1,8 +1,8 @@
 
 #include "gpio.h"
 
-#define DELAY 10
-//#define DELAY 5000000
+//#define DELAY 10
+#define DELAY 1000000
 
 void main (void) {
 
