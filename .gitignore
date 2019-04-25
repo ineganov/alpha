@@ -1,0 +1,4 @@
+sim/
+build/
+board/*/quartus/
+.vscode/
